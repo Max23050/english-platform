@@ -32,4 +32,4 @@ pnpm-debug.log*
 .vscode/
 .idea/
 
-backend/.git_backup/
+backend/.git_backup/    
