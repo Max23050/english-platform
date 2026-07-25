@@ -31,3 +31,5 @@ pnpm-debug.log*
 # IDE
 .vscode/
 .idea/
+
+backend/.git_backup/
