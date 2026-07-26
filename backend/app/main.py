@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import random
 import string
@@ -6,6 +6,7 @@ import string
 app = FastAPI()
 
 rooms = {}
+connections = {}
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,3 +33,22 @@ def create_room():
     }
 
     return {"code": code}
+
+@app.websocket("/ws/{room_code}")
+async def websocket_endpoint(websocket: WebSocket, room_code: str):
+    await websocket.accept()
+
+    if room_code not in connections:
+        connections[room_code] = []
+
+    connections[room_code].append(websocket)
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+
+            for connection in connections[room_code]:
+                await connection.send_json(data)
+
+    except WebSocketDisconnect:
+        connections[room_code].remove(websocket)

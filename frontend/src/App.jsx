@@ -1,29 +1,75 @@
-import { useEffect, useState } from 'react'
+import { useRef, useState } from 'react'
 
 import './App.css'
 
 function App() {
-  const [backendStatus, setBackendStatus] = useState("checking...");
+  const [roomCode, setRoomCode] = useState("TEST");
+  const [status, setStatus] = useState("not connected");
+  const [messages, setMessages] = useState([]);
 
-  useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const socketRef = useRef(null);
 
-    fetch(`${apiUrl}/health`)
-      .then((response) => response.json())
-      .then((data) => {
-        setBackendStatus(data.status);
+  function connectWebSocket() {
+    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/${roomCode}`);
+
+    socket.onopen = () => {
+      setStatus("connected");
+    };
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setMessages((currentMessages) => [...currentMessages, data]);
+    };
+
+    socket.onclose = () => {
+      setStatus("disconnected");
+    };
+
+    socket.onerror = () => {
+      setStatus("error");
+    };
+
+    socketRef.current = socket;
+  }
+
+  function sendTestMessage() {
+    if (!socketRef.current) {
+      return;
+    }
+
+    socketRef.current.send(
+      JSON.stringify({
+        type: "test_message",
+        text: "Hello from frontend",
+        created_at: new Date().toISOString(),
       })
-      .catch(() => {
-        setBackendStatus("backend not connected");
-      });
-  }, []);
+    )
+  }
+
+
 
   return (
     <>
       <main>
         <h1>English Speaking Platform</h1>
-        <p>Frontend is running</p>
-        <p>Backend status: {backendStatus}</p>
+        <p>WebSocket status: {status}</p>
+        
+        <input
+          value={roomCode}
+          onChange={(event) => setRoomCode(event.target.value)}
+          placeholder="Room code"
+        />
+
+        <button onClick={connectWebSocket}>Connect</button>
+        <button onClick={sendTestMessage}>Send Test Message</button>
+
+        <h2>Messages</h2>
+
+        <ul>
+          {messages.map((message, index) => (
+            <li key={index}>{JSON.stringify(message)}</li>
+          ))}
+        </ul>
       </main>
     </>
   )
