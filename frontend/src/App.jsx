@@ -2,6 +2,9 @@ import { useRef, useState } from 'react'
 
 import './App.css'
 
+const apiUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const wsUrl = apiUrl.replace(/^http/, "ws");
+
 function App() {
   const [roomCode, setRoomCode] = useState("TEST");
   const [status, setStatus] = useState("not connected");
@@ -10,7 +13,7 @@ function App() {
   const socketRef = useRef(null);
 
   function connectWebSocket() {
-    const socket = new WebSocket(`ws://127.0.0.1:8000/ws/${roomCode}`);
+    const socket = new WebSocket(`${wsUrl}/ws/${roomCode}`);
 
     socket.onopen = () => {
       setStatus("connected");
